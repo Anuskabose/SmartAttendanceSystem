@@ -1,0 +1,99 @@
+include <LiquidCrystal.h>
+#include <EEPROM.h>
+
+// Initialize LCD with the correct pins for Tinkercad's LCD
+// Parameters: (RS, E, DB4, DB5, DB6, DB7)
+LiquidCrystal lcd(4, 6, 10, 11, 12, 13);  // Updated pin configuration for Tinkercad
+
+// Define pins
+const int facultyButtonPin = 2;    // Faculty attendance button
+const int studentButtonPin = 3;    // Student attendance button
+const int displayButtonPin = 5;    // Display attendance button
+const int redLedPin = 7;          // Red LED for status
+const int greenLedPin = 8;        // Green LED for status
+
+// Variables to store attendance
+int facultyCount = 0;
+int studentCount = 0;
+
+void setup() {
+  // Initialize LCD
+  lcd.begin(16, 2);
+  
+  // Set pin modes
+  pinMode(facultyButtonPin, INPUT_PULLUP);
+  pinMode(studentButtonPin, INPUT_PULLUP);
+  pinMode(displayButtonPin, INPUT_PULLUP);
+  pinMode(redLedPin, OUTPUT);
+  pinMode(greenLedPin, OUTPUT);
+  
+  // Welcome message
+  lcd.print("Smart Attendance");
+  lcd.setCursor(0, 1);
+  lcd.print("System Ready!");
+  delay(2000);
+  lcd.clear();
+  
+  // Retrieve saved counts from EEPROM
+  facultyCount = EEPROM.read(0);
+  studentCount = EEPROM.read(1);
+}
+
+void loop() {
+  // Faculty attendance mode
+  if (digitalRead(facultyButtonPin) == LOW) {
+    facultyCount++;
+    EEPROM.write(0, facultyCount);
+    
+    lcd.clear();
+    lcd.print("Faculty Added!");
+    lcd.setCursor(0, 1);
+    lcd.print("Count: ");
+    lcd.print(facultyCount);
+    
+    digitalWrite(greenLedPin, HIGH);
+    delay(1000);
+    digitalWrite(greenLedPin, LOW);
+  }
+  
+  // Student attendance mode
+  if (digitalRead(studentButtonPin) == LOW) {
+    if (facultyCount > 0) {
+      studentCount++;
+      EEPROM.write(1, studentCount);
+      
+      lcd.clear();
+      lcd.print("Student Added!");
+      lcd.setCursor(0, 1);
+      lcd.print("Count: ");
+      lcd.print(studentCount);
+      
+      digitalWrite(greenLedPin, HIGH);
+      delay(1000);
+      digitalWrite(greenLedPin, LOW);
+    } else {
+      lcd.clear();
+      lcd.print("Error: No Faculty");
+      lcd.setCursor(0, 1);
+      lcd.print("Present!");
+      
+      digitalWrite(redLedPin, HIGH);
+      delay(1000);
+      digitalWrite(redLedPin, LOW);
+    }
+  }
+  
+  // Display attendance data
+  if (digitalRead(displayButtonPin) == LOW) {
+    lcd.clear();
+    lcd.print("F:");
+    lcd.print(facultyCount);
+    lcd.print(" S:");
+    lcd.print(studentCount);
+    lcd.setCursor(0, 1);
+    lcd.print("Total:");
+    lcd.print(facultyCount + studentCount);
+    delay(3000);
+    lcd.clear();
+  }
+}
